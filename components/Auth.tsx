@@ -33,7 +33,7 @@ export default function Auth() {
   return (
     <View style={styles.container}>
       <Image source={require('../assets/images/logo.png')} style={{ width: 120, height: 120, alignSelf: 'center', marginBottom: 10 }} resizeMode="contain" />
-      <Text className="text-2xl font-bold text-center mb-8 text-red-600">Welcome to 312</Text>
+      <Text className="text-2xl font-bold text-center mb-8 text-red-600">Welcome to UrbanSignal</Text>
       <Input label="Email" leftIcon={{ type: 'font-awesome', name: 'envelope' }} leftIconContainerStyle={{ marginRight: 10 }} onChangeText={setEmail} value={email} placeholder="email@address.com" autoCapitalize="none" />
       <Input label="Password" leftIcon={{ type: 'font-awesome', name: 'lock' }} leftIconContainerStyle={{ marginRight: 10 }} onChangeText={setPassword} value={password} secureTextEntry placeholder="Password" autoCapitalize="none" />
       <Button title="Sign in" disabled={loading} onPress={signInWithEmail} buttonStyle={{ backgroundColor: '#DC2626', borderRadius: 10, marginVertical: 10, padding: 12 }} />
@@ -41,4 +41,18 @@ export default function Auth() {
     </View>
   )
 }
-const styles = StyleSheet.create({  container: {    marginTop: 40,    padding: 12,  },  verticallySpaced: {    paddingTop: 4,    paddingBottom: 4,    alignSelf: 'stretch',  },  mt20: {    marginTop: 20,  },})
+
+const styles = StyleSheet.create({  
+  container: {    
+    marginTop: 40,    
+    padding: 12,  
+  },  
+  verticallySpaced: {    
+    paddingTop: 4,    
+    paddingBottom: 4,    
+    alignSelf: 'stretch',  
+  },  
+  mt20: {    
+    marginTop: 20,  
+  },
+});
