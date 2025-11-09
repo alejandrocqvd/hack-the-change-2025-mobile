@@ -447,7 +447,6 @@ export const Camera = forwardRef<CameraRef, CameraProps>(
               ratio={aspectRatios[aspectRatioIndex]}
               animatedProps={animatedCameraProps}
             >
-              {/* Children of CameraView are rendered as an overlay */}
               {showGrid && (
                 <View style={styles.gridOverlay}>
                   <View style={styles.gridLines}>

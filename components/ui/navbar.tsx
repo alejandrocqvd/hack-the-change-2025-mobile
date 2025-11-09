@@ -25,7 +25,6 @@ export default function NavBar({ canGoBack = false, hasNotification = false }) {
 
       <Image source={require("@/assets/images/logo.png")} className="w-24 h-10" resizeMode="contain" />
 
-      {/* Notification bell */}
       <View className="relative">
         <Pressable
           onPress={() => setShowDropdown(!showDropdown)}

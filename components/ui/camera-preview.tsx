@@ -157,7 +157,6 @@ export function CameraPreview() {
             />
           )}
 
-          {/* Top Floating Buttons */}
           <View style={styles.topFloatingButtons}>
             <View
               style={{
