@@ -9,8 +9,9 @@ export default function RootLayout() {
         headerShown: false,
       }}>
       <Stack.Screen name="index" />
+      <Stack.Screen name="auth" />
       <Stack.Screen name="history" />
-      <Stack.Screen name="report-info" />
+      <Stack.Screen name="report-info/[id]" />
       <Stack.Screen name="camera" />
       <Stack.Screen name="request-form" />
     </Stack>

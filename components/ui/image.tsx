@@ -121,7 +121,6 @@ export const Image = forwardRef<ExpoImage, ImageProps>(
           {...props}
         />
 
-        {/* Loading indicator */}
         {isLoading && showLoadingIndicator && (
           <View style={styles.overlay}>
             <ActivityIndicator
@@ -131,7 +130,6 @@ export const Image = forwardRef<ExpoImage, ImageProps>(
           </View>
         )}
 
-        {/* Error fallback */}
         {hasError && showErrorFallback && (
           <View style={[styles.overlay, styles.errorContainer]}>
             <Text

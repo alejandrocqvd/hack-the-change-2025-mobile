@@ -124,14 +124,7 @@ const handleBack = () => {
           ref={cameraRef}
           onCameraReady={handleCameraReady}
         >
-          <View className="absolute top-12 left-0 right-0 flex-row justify-between px-5 z-10">
-            <TouchableOpacity 
-                className="bg-black/50 px-4 py-3 rounded-lg"
-                onPress={handleBack} 
-            >
-              <Text className="text-white text-base font-semibold">Back</Text>
-            </TouchableOpacity>
-            
+          <View className="absolute top-12 right-5 z-10">
             <TouchableOpacity 
               className="bg-black/50 px-4 py-3 rounded-lg"
               onPress={toggleCameraFacing}
