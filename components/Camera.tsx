@@ -1,21 +1,112 @@
 import { CameraType, CameraView, useCameraPermissions } from 'expo-camera';
+import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { Image, StatusBar, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, StatusBar, Text, TouchableOpacity, View } from 'react-native';
+
+const getCommunityFromOSM = async (lat: number, lng: number): Promise<string> => {
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`
+    );
+    
+    const data = await response.json();
+    
+    if (data.address) {
+      return data.address.neighbourhood || 
+             data.address.suburb ||
+             data.address.city_district ||
+             data.address.village ||
+             data.address.town ||
+             data.address.city ||
+             'Unknown Community';
+    }
+    
+    return 'Unknown Community';
+  } catch (error) {
+    console.error('OSM error:', error);
+    return 'Unknown Community';
+  }
+};
 
 export default function Camera() {
   const [facing, setFacing] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
   const [photo, setPhoto] = useState<string | null>(null);
   const [cameraReady, setCameraReady] = useState(false);
+  const [location, setLocation] = useState<Location.LocationObject | null>(null);
+  const [address, setAddress] = useState<string>('');
+  const [community, setCommunity] = useState<string>('');
+  const [locationPermission, setLocationPermission] = useState<boolean>(false);
+  const [gettingAddress, setGettingAddress] = useState(false);
+  const [detectingCommunity, setDetectingCommunity] = useState(false);
   const cameraRef = useRef(null);
   const router = useRouter();
 
   useEffect(() => {
-    if (permission?.granted) {
-      console.log('Camera permission granted');
+    (async () => {
+      if (permission?.granted) {
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          console.log('Location permission denied');
+          Alert.alert(
+            'Location Access Required',
+            'This app needs location access to associate photos with communities. Please enable location permissions in settings.',
+            [{ text: 'OK' }]
+          );
+          return;
+        }
+        
+        setLocationPermission(true);
+        
+        try {
+          let location = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+          });
+          setLocation(location);
+          console.log('Location obtained:', location.coords);
+
+          await getAddressAndCommunity(location.coords);
+          
+        } catch (error) {
+          console.log('Error getting location:', error);
+        }
+      }
+    })();
+  }, [permission?.granted]);
+
+  const getAddressAndCommunity = async (coords: { latitude: number; longitude: number }) => {
+    try {
+      setGettingAddress(true);
+      setDetectingCommunity(true);
+
+      const addresses = await Location.reverseGeocodeAsync(coords);
+      
+      if (addresses.length > 0) {
+        const addressObj = addresses[0];
+        const addressParts = [
+          addressObj.street,
+          addressObj.city,
+          addressObj.region,
+          addressObj.postalCode,
+          addressObj.country
+        ].filter(part => part).join(', ');
+        
+        setAddress(addressParts);
+        console.log('Address found:', addressParts);
+      }
+
+      const detectedCommunity = await getCommunityFromOSM(coords.latitude, coords.longitude);
+      setCommunity(detectedCommunity);
+      console.log('Community detected:', detectedCommunity);
+      
+    } catch (error) {
+      console.log('Error getting address/community:', error);
+    } finally {
+      setGettingAddress(false);
+      setDetectingCommunity(false);
     }
-  }, [permission]);
+  };
 
   if (!permission) {
     return (
@@ -44,11 +135,40 @@ export default function Camera() {
   const takePicture = async () => {
     if (cameraRef.current && cameraReady) {
       try {
+        let currentLocation = location;
+        let currentAddress = address;
+        let currentCommunity = community;
+        
+        if (locationPermission) {
+          try {
+            currentLocation = await Location.getCurrentPositionAsync({
+              accuracy: Location.Accuracy.Balanced,
+            });
+            setLocation(currentLocation);
+            
+            await getAddressAndCommunity(currentLocation.coords);
+            currentAddress = address;
+            currentCommunity = community;
+            
+          } catch (error) {
+            console.log('Error getting fresh location:', error);
+          }
+        }
+
         const photo = await cameraRef.current.takePictureAsync({
           quality: 0.8,
           skipProcessing: true,
         });
+        
         setPhoto(photo.uri);
+        
+        console.log('Photo with location data:', {
+          uri: photo.uri,
+          location: currentLocation?.coords,
+          address: currentAddress,
+          community: currentCommunity
+        });
+        
       } catch (error) {
         console.log('Error taking picture:', error);
       }
@@ -67,7 +187,21 @@ export default function Camera() {
     if (photo) {
       router.push({
         pathname: '/request-form',
-        params: { photoUri: photo }
+        params: { 
+          photoUri: photo,
+          latitude: location?.coords.latitude?.toString(),
+          longitude: location?.coords.longitude?.toString(),
+          address: address || '',
+          community: community || '',
+          locationData: location ? JSON.stringify({
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+            accuracy: location.coords.accuracy,
+            timestamp: location.timestamp,
+            address: address,
+            community: community
+          }) : undefined
+        }
       });
     } else {
       router.push('/request-form');
@@ -78,7 +212,7 @@ export default function Camera() {
     setCameraReady(true);
   };
 
-const handleBack = () => {
+  const handleBack = () => {
     router.back();
   };
 
@@ -86,14 +220,31 @@ const handleBack = () => {
     return (
       <View className="flex-1 bg-black">
         <Image source={{ uri: photo }} className="flex-1" resizeMode="contain" />
-            <View className="absolute top-12 left-5 z-10">
-            <TouchableOpacity 
-                className="bg-black/50 px-4 py-3 rounded-lg"
-                onPress={handleBack} 
-            >
-                <Text className="text-white text-base font-semibold">Back</Text>
-            </TouchableOpacity>
+        <View className="absolute top-12 left-5 z-10">
+          <TouchableOpacity 
+            className="bg-black/50 px-4 py-3 rounded-lg"
+            onPress={handleBack} 
+          >
+            <Text className="text-white text-base font-semibold">Back</Text>
+          </TouchableOpacity>
         </View>
+        
+        {(address || community) && (
+          <View className="absolute top-20 left-5 right-5">
+            <View className="bg-black/70 px-4 py-3 rounded-lg">
+              {community && community !== 'Unknown Community' && (
+                <Text className="text-green-300 text-sm font-semibold text-center mb-1">
+                  🏘️ {community}
+                </Text>
+              )}
+              {address && (
+                <Text className="text-white text-xs text-center" numberOfLines={2}>
+                  📍 {address}
+                </Text>
+              )}
+            </View>
+          </View>
+        )}
         
         <View className="absolute bottom-10 left-0 right-0 flex-row justify-around items-center px-5">
           <TouchableOpacity 
@@ -124,7 +275,14 @@ const handleBack = () => {
           ref={cameraRef}
           onCameraReady={handleCameraReady}
         >
-          <View className="absolute top-12 right-5 z-10">
+          <View className="absolute top-12 left-0 right-0 flex-row justify-between px-5 z-10">
+            <TouchableOpacity 
+              className="bg-black/50 px-4 py-3 rounded-lg"
+              onPress={handleBack} 
+            >
+              <Text className="text-white text-base font-semibold">Back</Text>
+            </TouchableOpacity>
+            
             <TouchableOpacity 
               className="bg-black/50 px-4 py-3 rounded-lg"
               onPress={toggleCameraFacing}
@@ -142,6 +300,31 @@ const handleBack = () => {
           )}
         </CameraView>
       </View>
+      
+      {location && (
+        <View className="absolute bottom-36 left-0 right-0 items-center px-4 z-10">
+          <View className="bg-black/70 px-4 py-3 rounded-lg max-w-full">
+            {detectingCommunity || gettingAddress ? (
+              <Text className="text-gray-300 text-xs text-center">
+                Detecting location...
+              </Text>
+            ) : (
+              <>
+                {community && community !== 'Unknown Community' && (
+                  <Text className="text-green-300 text-sm text-center font-semibold mb-1">
+                    🏘️ {community}
+                  </Text>
+                )}
+                {address && (
+                  <Text className="text-white text-sm text-center" numberOfLines={1}>
+                    📍 {address}
+                  </Text>
+                )}
+              </>
+            )}
+          </View>
+        </View>
+      )}
       
       <View className="absolute bottom-10 left-0 right-0 items-center justify-center">
         <TouchableOpacity 
