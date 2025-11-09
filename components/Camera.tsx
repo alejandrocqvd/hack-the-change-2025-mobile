@@ -1,5 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import { CameraType, CameraView, useCameraPermissions } from 'expo-camera';
+import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { Image, StatusBar, Text, TouchableOpacity, View } from 'react-native';
 
@@ -10,6 +11,7 @@ export default function Camera() {
   const [cameraReady, setCameraReady] = useState(false);
   const cameraRef = useRef(null);
   const navigation = useNavigation();
+  const router = useRouter();
 
   useEffect(() => {
     if (permission?.granted) {
@@ -66,12 +68,6 @@ export default function Camera() {
     setPhoto(null);
   };
 
-  const handleContinue = () => {
-    navigation.navigate('RequestForm', { 
-      photoUri: photo 
-    });
-  };
-
   const handleCameraReady = () => {
     console.log('Camera is ready');
     setCameraReady(true);
@@ -89,7 +85,7 @@ export default function Camera() {
             <Text className="text-white font-bold text-base">Retake</Text>
           </TouchableOpacity>
           <TouchableOpacity 
-            onPress={handleContinue}
+            onPress={() => router.push("/request-form")}
             className="bg-green-500 py-4 px-8 rounded-full min-w-32 items-center"
           >
             <Text className="text-white font-bold text-base">Continue</Text>
