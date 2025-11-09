@@ -1,6 +1,6 @@
 // components/RequestForm.tsx
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Alert,
     Image,
@@ -18,17 +18,28 @@ import { supabase } from '../lib/supabase';
 
 export default function RequestForm() {
   const router = useRouter();
-  const { photoUri } = useLocalSearchParams();
+  const { photoUri, address, community } = useLocalSearchParams();
   
-  // Handle photoUri which might be string or string[]
+  // Handle data from camera
   const actualPhotoUri = Array.isArray(photoUri) ? photoUri[0] : photoUri;
-  const initialImageUri = actualPhotoUri || null;
+  const actualAddress = Array.isArray(address) ? address[0] : address;
+  const actualCommunity = Array.isArray(community) ? community[0] : community;
+
+  // Debug received data
+  useEffect(() => {
+    console.log('Received from Camera:');
+    console.log('Photo URI:', actualPhotoUri);
+    console.log('Community:', actualCommunity);
+    console.log('Address:', actualAddress);
+  }, [actualPhotoUri, actualCommunity, actualAddress]);
 
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     type: null,
-    imageUri: initialImageUri,
+    imageUri: actualPhotoUri || null,
+    address: actualAddress || '',
+    community: actualCommunity || '',
   });
 
   const [errors, setErrors] = useState({
@@ -64,12 +75,11 @@ export default function RequestForm() {
 
   const [uploading, setUploading] = useState(false);
 
-  // Upload image to Supabase Storage - FIXED VERSION
+  // Upload image to Supabase Storage
   const uploadImageToSupabase = async (fileUri: string) => {
     try {
       console.log('Uploading image:', fileUri);
       
-      // Use FormData - this works in React Native
       const formData = new FormData();
       const filename = fileUri.split('/').pop() || `photo-${Date.now()}.jpg`;
       
@@ -111,13 +121,11 @@ export default function RequestForm() {
 
     let isValid = true;
 
-    // Validate title
     if (!formData.title.trim()) {
       newErrors.title = 'Title is required';
       isValid = false;
     }
 
-    // Validate type
     if (!formData.type) {
       newErrors.type = 'Please select an incident type';
       isValid = false;
@@ -132,10 +140,8 @@ export default function RequestForm() {
   };
 
   const handleSubmit = async () => {
-    // Dismiss keyboard first
     Keyboard.dismiss();
 
-    // Validate form
     if (!validateForm()) {
       Alert.alert(
         'Missing Information',
@@ -157,15 +163,13 @@ export default function RequestForm() {
           console.log('Image uploaded successfully:', finalImageUrl);
         } catch (uploadError) {
           console.error('Image upload failed, continuing without image:', uploadError);
-          // Continue without image if upload fails
           finalImageUrl = null;
         }
       } else if (formData.imageUri) {
-        // If it's already a web URL, use it as-is
         finalImageUrl = formData.imageUri;
       }
 
-      // Prepare data for backend
+      // Prepare data for Supabase - ONLY address and community (no coordinates)
       const submissionData: any = {
         title: formData.title,
         type: formData.type,
@@ -173,12 +177,21 @@ export default function RequestForm() {
         created_at: new Date().toISOString(),
       };
 
-      // Only add image_url if we have one
+      // Add address and community
+      if (formData.address) {
+        submissionData.address = formData.address;
+      }
+
+      if (formData.community) {
+        submissionData.community = formData.community;
+      }
+
+      // Add image URL if available
       if (finalImageUrl) {
         submissionData.image_url = finalImageUrl;
       }
 
-      console.log('Submitting data:', submissionData);
+      console.log('Submitting to Supabase:', submissionData);
 
       const { data, error } = await supabase
         .from('requests')
@@ -197,12 +210,13 @@ export default function RequestForm() {
           { 
             text: 'OK', 
             onPress: () => {
-              // Reset form after user clicks OK
               setFormData({ 
                 title: '', 
                 description: '', 
                 type: null,
                 imageUri: null,
+                address: '',
+                community: '',
               });
               setValue(null);
               router.back();
@@ -244,6 +258,25 @@ export default function RequestForm() {
         <View className="p-5">
           <Text className="text-2xl font-bold mb-5">Submit Request</Text>
           
+          {/* Simple Location Display - Only address and community */}
+          {(formData.address || formData.community) && (
+            <View className="mb-5 bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <Text className="text-lg font-semibold mb-2 text-blue-800">📍 Location Information</Text>
+              
+              {formData.community && (
+                <Text className="text-blue-700 text-base font-semibold mb-1">
+                  🏘️ {formData.community}
+                </Text>
+              )}
+              
+              {formData.address && (
+                <Text className="text-blue-700 text-sm">
+                  📍 {formData.address}
+                </Text>
+              )}
+            </View>
+          )}
+
           <View className="mb-5">
             <Text className="text-lg font-semibold mb-2">Captured Image (Optional)</Text>
             {formData.imageUri ? (
@@ -251,7 +284,7 @@ export default function RequestForm() {
                 <Image 
                   source={{ uri: formData.imageUri }} 
                   className="w-full h-64"
-                  resizeMode="contain"
+                  resizeMode="cover"
                 />
               </View>
             ) : (
