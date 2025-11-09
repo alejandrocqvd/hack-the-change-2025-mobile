@@ -12,7 +12,7 @@ export default function NavBar({ canGoBack = false, hasNotification = false }) {
           <ArrowLeft size={22} color="#111" />
         </Pressable>
       ) : (
-        <View className="w-10" />
+        <View className="w-12" />
       )}
       <Image source={require("@/assets/images/logo.png")} className="w-24 h-10" resizeMode="contain" />
       <View className="relative">

@@ -1,8 +1,8 @@
-import { View } from "lucide-react-native";
+import Home from "@/components/HomePage";
 
-export default function ReportInfoPage() {
+export default function Index() {
 
   return (
-    <View></View>
+    <Home />
   );
 }

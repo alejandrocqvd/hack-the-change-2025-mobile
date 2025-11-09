@@ -1,4 +1,5 @@
 import NavBar from "@/components/ui/navbar";
+import { useRouter } from "expo-router";
 import React from "react";
 import { Dimensions, Text, TouchableOpacity, View } from "react-native";
 import Carousel from "react-native-reanimated-carousel";
@@ -35,32 +36,34 @@ function Highlight(icon: string, title: string, value: string) {
 
 export default function Home() {
   const reports = [
-  {
-    type: "Fence",
-    title: "Broken fence",
-    date: "Nov 8 • 7:20 PM",
-    status: "Open",
-    location: "Chaparral",
-  },
-  {
-    type: "Road Hazard",
-    title: "Pothole on Main St.",
-    date: "Nov 7 • 5:45 PM",
-    status: "In Progress",
-    location: "Main St. & 3rd Ave",
-  },
-  {
-    type: "Lighting",
-    title: "Streetlight out",
-    date: "Nov 5 • 10:10 PM",
-    status: "Closed",
-    location: "Downtown",
-  },
-];
+    {
+      type: "Fence",
+      title: "Broken fence",
+      date: "Nov 8 • 7:20 PM",
+      status: "Open",
+      location: "Chaparral",
+    },
+    {
+      type: "Road Hazard",
+      title: "Pothole on Main St.",
+      date: "Nov 7 • 5:45 PM",
+      status: "In Progress",
+      location: "Main St. & 3rd Ave",
+    },
+    {
+      type: "Lighting",
+      title: "Streetlight out",
+      date: "Nov 5 • 10:10 PM",
+      status: "Closed",
+      location: "Downtown",
+    },
+  ];
+  
+  const router = useRouter();
 
   return (
     <View className="flex flex-col justify-start items-center bg-white w-screen h-screen">
-      <NavBar canGoBack={true} hasNotification={true} />
+      <NavBar canGoBack={false} hasNotification={true} />
       <Text className="mb-4 mt-8 font-bold text-2xl">Your Reports</Text>
       <Carousel
         loop={false}
@@ -71,11 +74,11 @@ export default function Home() {
         scrollAnimationDuration={800}
         renderItem={({ item }) => (
           <View className="flex-1 mx-4">
-            {ReportCard(item.type, item.title, item.date, item.status, item.location, () => {})}
+            {ReportCard(item.type, item.title, item.date, item.status, item.location)}
           </View>
         )}
       />
-      <TouchableOpacity onPress={() => {}} className="my-4 bg-green-500 w-48 px-6 py-3 rounded-xl flex justify-center items-center">
+      <TouchableOpacity onPress={() => router.push("/camera")} className="my-4 bg-green-500 w-48 px-6 py-3 rounded-xl flex justify-center items-center">
         <Text className="text-white text-xl font-bold">+    New Report</Text>
       </TouchableOpacity>
       <View className="flex flex-row w-full justify-center items-center my-8 gap-4">
