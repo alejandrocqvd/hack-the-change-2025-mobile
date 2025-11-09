@@ -2,16 +2,16 @@
 import { useNavigation, useRoute } from '@react-navigation/native';
 import React, { useState } from 'react';
 import {
-    Alert,
-    Image,
-    Keyboard,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Alert,
+  Image,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { supabase } from '../lib/supabase';
@@ -185,7 +185,6 @@ export default function RequestForm() {
         <View className="p-5">
           <Text className="text-2xl font-bold mb-5">Submit Request</Text>
           
-          {/* Camera Image Box */}
           <View className="mb-5">
             <Text className="text-lg font-semibold mb-2">Captured Image *</Text>
             <View className={`border-2 border-dashed rounded-lg bg-gray-50 ${
@@ -209,7 +208,6 @@ export default function RequestForm() {
             )}
           </View>
 
-          {/* Form fields */}
           <View className="mb-4">
             <Text className="text-lg font-medium mb-2">Title *</Text>
             <TextInput
@@ -229,7 +227,6 @@ export default function RequestForm() {
             ) : null}
           </View>
 
-          {/* Dropdown between Title and Description */}
           <View className="mb-4 z-50">
             <Text className="text-lg font-medium mb-2">Type *</Text>
             <DropDownPicker
@@ -302,7 +299,6 @@ export default function RequestForm() {
             />
           </View>
 
-          {/* Submit button */}
           <TouchableOpacity 
             className="bg-[#FF3103] py-4 rounded-lg mt-4"
             onPress={handleSubmit}
@@ -310,7 +306,6 @@ export default function RequestForm() {
             <Text className="text-white text-center font-bold text-lg">Submit Request</Text>
           </TouchableOpacity>
 
-          {/* Back button */}
           <TouchableOpacity 
             className="bg-gray-500 py-4 rounded-lg mt-3"
             onPress={() => navigation.goBack()}
@@ -318,7 +313,6 @@ export default function RequestForm() {
             <Text className="text-white text-center font-bold text-lg">Back to Camera</Text>
           </TouchableOpacity>
 
-          {/* Required fields note */}
           <Text className="text-gray-500 text-sm mt-4 text-center">
             * Required fields
           </Text>
