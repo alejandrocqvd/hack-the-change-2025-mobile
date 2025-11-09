@@ -1,4 +1,3 @@
-// components/RequestForm.tsx
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
@@ -20,12 +19,10 @@ export default function RequestForm() {
   const router = useRouter();
   const { photoUri, address, community } = useLocalSearchParams();
   
-  // Handle data from camera
   const actualPhotoUri = Array.isArray(photoUri) ? photoUri[0] : photoUri;
   const actualAddress = Array.isArray(address) ? address[0] : address;
   const actualCommunity = Array.isArray(community) ? community[0] : community;
 
-  // Debug received data
   useEffect(() => {
     console.log('Received from Camera:');
     console.log('Photo URI:', actualPhotoUri);
@@ -75,7 +72,6 @@ export default function RequestForm() {
 
   const [uploading, setUploading] = useState(false);
 
-  // Upload image to Supabase Storage
   const uploadImageToSupabase = async (fileUri: string) => {
     try {
       console.log('Uploading image:', fileUri);
@@ -156,7 +152,6 @@ export default function RequestForm() {
     try {
       let finalImageUrl = null;
 
-      // Upload image if it's a local file:// URI
       if (formData.imageUri && formData.imageUri.startsWith('file://')) {
         try {
           finalImageUrl = await uploadImageToSupabase(formData.imageUri);
@@ -169,7 +164,6 @@ export default function RequestForm() {
         finalImageUrl = formData.imageUri;
       }
 
-      // Prepare data for Supabase - ONLY address and community (no coordinates)
       const submissionData: any = {
         title: formData.title,
         type: formData.type,
@@ -177,7 +171,6 @@ export default function RequestForm() {
         created_at: new Date().toISOString(),
       };
 
-      // Add address and community
       if (formData.address) {
         submissionData.address = formData.address;
       }
@@ -186,7 +179,6 @@ export default function RequestForm() {
         submissionData.community = formData.community;
       }
 
-      // Add image URL if available
       if (finalImageUrl) {
         submissionData.image_url = finalImageUrl;
       }
@@ -258,7 +250,6 @@ export default function RequestForm() {
         <View className="p-5">
           <Text className="text-2xl font-bold mb-5">Submit Request</Text>
           
-          {/* Simple Location Display - Only address and community */}
           {(formData.address || formData.community) && (
             <View className="mb-5 bg-blue-50 border border-blue-200 rounded-lg p-4">
               <Text className="text-lg font-semibold mb-2 text-blue-800">📍 Location Information</Text>

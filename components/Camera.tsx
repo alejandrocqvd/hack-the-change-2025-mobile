@@ -146,7 +146,6 @@ export default function Camera() {
             });
             setLocation(currentLocation);
             
-            // Get fresh address and community
             await getAddressAndCommunity(currentLocation.coords);
             currentAddress = address;
             currentCommunity = community;
