@@ -62,7 +62,6 @@ export default function ReportInfoPage() {
         </View>
       </ScrollView>
 
-      {/* Confirmation Popup */}
       <ConfirmModal
         visible={showConfirm}
         title="Delete Report"
