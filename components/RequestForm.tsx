@@ -1,4 +1,3 @@
-// components/RequestForm.tsx
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -20,7 +19,6 @@ export default function RequestForm() {
   const router = useRouter();
   const { photoUri } = useLocalSearchParams();
   
-  // Handle photoUri which might be string or string[]
   const actualPhotoUri = Array.isArray(photoUri) ? photoUri[0] : photoUri;
   const initialImageUri = actualPhotoUri || null;
 
@@ -64,12 +62,10 @@ export default function RequestForm() {
 
   const [uploading, setUploading] = useState(false);
 
-  // Upload image to Supabase Storage - FIXED VERSION
   const uploadImageToSupabase = async (fileUri: string) => {
     try {
       console.log('Uploading image:', fileUri);
       
-      // Use FormData - this works in React Native
       const formData = new FormData();
       const filename = fileUri.split('/').pop() || `photo-${Date.now()}.jpg`;
       
@@ -111,13 +107,11 @@ export default function RequestForm() {
 
     let isValid = true;
 
-    // Validate title
     if (!formData.title.trim()) {
       newErrors.title = 'Title is required';
       isValid = false;
     }
 
-    // Validate type
     if (!formData.type) {
       newErrors.type = 'Please select an incident type';
       isValid = false;
@@ -132,10 +126,8 @@ export default function RequestForm() {
   };
 
   const handleSubmit = async () => {
-    // Dismiss keyboard first
     Keyboard.dismiss();
 
-    // Validate form
     if (!validateForm()) {
       Alert.alert(
         'Missing Information',
@@ -150,22 +142,18 @@ export default function RequestForm() {
     try {
       let finalImageUrl = null;
 
-      // Upload image if it's a local file:// URI
       if (formData.imageUri && formData.imageUri.startsWith('file://')) {
         try {
           finalImageUrl = await uploadImageToSupabase(formData.imageUri);
           console.log('Image uploaded successfully:', finalImageUrl);
         } catch (uploadError) {
           console.error('Image upload failed, continuing without image:', uploadError);
-          // Continue without image if upload fails
           finalImageUrl = null;
         }
       } else if (formData.imageUri) {
-        // If it's already a web URL, use it as-is
         finalImageUrl = formData.imageUri;
       }
 
-      // Prepare data for backend
       const submissionData: any = {
         title: formData.title,
         type: formData.type,
@@ -173,7 +161,6 @@ export default function RequestForm() {
         created_at: new Date().toISOString(),
       };
 
-      // Only add image_url if we have one
       if (finalImageUrl) {
         submissionData.image_url = finalImageUrl;
       }
@@ -197,7 +184,6 @@ export default function RequestForm() {
           { 
             text: 'OK', 
             onPress: () => {
-              // Reset form after user clicks OK
               setFormData({ 
                 title: '', 
                 description: '', 
@@ -251,7 +237,7 @@ export default function RequestForm() {
                 <Image 
                   source={{ uri: formData.imageUri }} 
                   className="w-full h-64"
-                  resizeMode="contain"
+                  resizeMode="cover"
                 />
               </View>
             ) : (
