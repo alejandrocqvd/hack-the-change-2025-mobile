@@ -6,7 +6,7 @@ import { Image, Pressable, View } from "react-native";
 export default function NavBar({ canGoBack = false, hasNotification = false }) {
   const router = useRouter();
   return (
-    <View className="flex-row items-center justify-between w-full px-5 py-4 bg-red-600">
+    <View className="flex-row items-center justify-between w-full px-5 pt-[4.75rem] pb-4 bg-red-600">
       {canGoBack ? (
         <Pressable onPress={() => router.back()} className="p-3 rounded-full bg-gray-100 active:bg-gray-200">
           <ArrowLeft size={22} color="#111" />

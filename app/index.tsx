@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // components/RequestForm.tsx
 import { useNavigation, useRoute } from '@react-navigation/native';
 import React, { useState } from 'react';
@@ -30,6 +31,11 @@ export default function RequestForm() {
     type: null,
     imageUri: initialImageUri,
   });
+=======
+import { View } from "lucide-react-native";
+
+export default function ReportInfoPage() {
+>>>>>>> f2432c4 (reportinfopage XDDDDD)
 
   const [errors, setErrors] = useState({
     title: '',
@@ -171,6 +177,7 @@ export default function RequestForm() {
 };
 
   return (
+<<<<<<< HEAD
     <KeyboardAvoidingView 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       className="flex-1 bg-white"
@@ -325,5 +332,8 @@ export default function RequestForm() {
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
+=======
+    <View></View>
+>>>>>>> f2432c4 (reportinfopage XDDDDD)
   );
 }
