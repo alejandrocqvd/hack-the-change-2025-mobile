@@ -1,7 +1,7 @@
-import Camera from "@/components/Camera";
+import History from "@/components/History";
 
 export default function history() {
   return (
-    <Camera />
+    <History />
   )
 }

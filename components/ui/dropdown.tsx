@@ -44,7 +44,7 @@ export default function FilterRow({ selectedStatus, setSelectedStatus, selectedD
   const handleLocation = (v: string) => { setLocation(v); setSelectedLocation(v); };
   return (
     <View className="flex-row justify-between items-start mx-5 border-b border-gray-300 pb-6">
-      <Dropdown label="Status" options={["All", "Open", "Closed", "In Progress"]} selected={status} onSelect={handleStatus} />
+      <Dropdown label="Status" options={["All", "Open", "Closed"]} selected={status} onSelect={handleStatus} />
       <Dropdown label="Date" options={["Any", "Today", "This Week", "This Month"]} selected={date} onSelect={handleDate} />
       <Dropdown label="Location" options={["All", "Downtown", "Chaparral", "Silverado"]} selected={location} onSelect={handleLocation} />
     </View>
