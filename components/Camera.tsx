@@ -220,31 +220,14 @@ export default function Camera() {
     return (
       <View className="flex-1 bg-black">
         <Image source={{ uri: photo }} className="flex-1" resizeMode="contain" />
-        <View className="absolute top-12 left-5 z-10">
-          <TouchableOpacity 
-            className="bg-black/50 px-4 py-3 rounded-lg"
-            onPress={handleBack} 
-          >
-            <Text className="text-white text-base font-semibold">Back</Text>
-          </TouchableOpacity>
-        </View>
-        
-        {(address || community) && (
-          <View className="absolute top-20 left-5 right-5">
-            <View className="bg-black/70 px-4 py-3 rounded-lg">
-              {community && community !== 'Unknown Community' && (
-                <Text className="text-green-300 text-sm font-semibold text-center mb-1">
-                  🏘️ {community}
-                </Text>
-              )}
-              {address && (
-                <Text className="text-white text-xs text-center" numberOfLines={2}>
-                  📍 {address}
-                </Text>
-              )}
-            </View>
+        <View className="absolute top-24 left-0 right-0 flex-row justify-between px-5 z-10">
+            <TouchableOpacity 
+              className="bg-black/50 px-4 py-3 rounded-lg"
+              onPress={handleBack} 
+            >
+              <Text className="text-white text-base font-semibold">Back</Text>
+            </TouchableOpacity>
           </View>
-        )}
         
         <View className="absolute bottom-10 left-0 right-0 flex-row justify-around items-center px-5">
           <TouchableOpacity 
@@ -275,7 +258,7 @@ export default function Camera() {
           ref={cameraRef}
           onCameraReady={handleCameraReady}
         >
-          <View className="absolute top-12 left-0 right-0 flex-row justify-between px-5 z-10">
+          <View className="absolute top-24 left-0 right-0 flex-row justify-between px-5 z-10">
             <TouchableOpacity 
               className="bg-black/50 px-4 py-3 rounded-lg"
               onPress={handleBack} 
@@ -300,31 +283,6 @@ export default function Camera() {
           )}
         </CameraView>
       </View>
-      
-      {location && (
-        <View className="absolute bottom-36 left-0 right-0 items-center px-4 z-10">
-          <View className="bg-black/70 px-4 py-3 rounded-lg max-w-full">
-            {detectingCommunity || gettingAddress ? (
-              <Text className="text-gray-300 text-xs text-center">
-                Detecting location...
-              </Text>
-            ) : (
-              <>
-                {community && community !== 'Unknown Community' && (
-                  <Text className="text-green-300 text-sm text-center font-semibold mb-1">
-                    🏘️ {community}
-                  </Text>
-                )}
-                {address && (
-                  <Text className="text-white text-sm text-center" numberOfLines={1}>
-                    📍 {address}
-                  </Text>
-                )}
-              </>
-            )}
-          </View>
-        </View>
-      )}
       
       <View className="absolute bottom-10 left-0 right-0 items-center justify-center">
         <TouchableOpacity 
