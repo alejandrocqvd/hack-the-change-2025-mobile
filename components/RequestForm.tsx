@@ -1,28 +1,28 @@
 // components/RequestForm.tsx
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-  Alert,
-  Image,
-  Keyboard,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Alert,
+    Image,
+    Keyboard,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { supabase } from '../lib/supabase';
 
 export default function RequestForm() {
-  const navigation = useNavigation();
-  const route = useRoute();
+  const router = useRouter();
+  const { photoUri } = useLocalSearchParams();
   
-  // Get the captured image URI from camera screen or use placeholder
-  const { imageUri } = route.params || {};
-  const initialImageUri = imageUri || 'https://research.ucalgary.ca/sites/default/files/styles/ucws_image_desktop/public/2024-05/Ahead-of-Tomorrow-Hero_NEW-2_0.jpg?h=e400bdbf&itok=OCp5p7r9';
+  // Handle photoUri which might be string or string[]
+  const actualPhotoUri = Array.isArray(photoUri) ? photoUri[0] : photoUri;
+  const initialImageUri = actualPhotoUri || null;
 
   const [formData, setFormData] = useState({
     title: '',
@@ -34,7 +34,6 @@ export default function RequestForm() {
   const [errors, setErrors] = useState({
     title: '',
     type: '',
-    image: ''
   });
 
   const [open, setOpen] = useState(false);
@@ -63,11 +62,51 @@ export default function RequestForm() {
     { label: 'Vandalism', value: 'Vandalism' },
   ]);
 
+  const [uploading, setUploading] = useState(false);
+
+  // Upload image to Supabase Storage - FIXED VERSION
+  const uploadImageToSupabase = async (fileUri: string) => {
+    try {
+      console.log('Uploading image:', fileUri);
+      
+      // Use FormData - this works in React Native
+      const formData = new FormData();
+      const filename = fileUri.split('/').pop() || `photo-${Date.now()}.jpg`;
+      
+      formData.append('file', {
+        uri: fileUri,
+        type: 'image/jpeg', 
+        name: filename,
+      } as any);
+      
+      const storageFileName = `requests/${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`;
+      
+      const { data, error } = await supabase.storage
+        .from('images')
+        .upload(storageFileName, formData);
+
+      if (error) {
+        console.error('Upload error:', error);
+        throw error;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from('images')
+        .getPublicUrl(storageFileName);
+
+      console.log('Upload successful, public URL:', urlData.publicUrl);
+      return urlData.publicUrl;
+
+    } catch (error) {
+      console.error('Image upload failed:', error);
+      throw error;
+    }
+  };
+
   const validateForm = () => {
     const newErrors = {
       title: '',
       type: '',
-      image: ''
     };
 
     let isValid = true;
@@ -83,12 +122,6 @@ export default function RequestForm() {
       newErrors.type = 'Please select an incident type';
       isValid = false;
     }
-
-    // Validate image (check if it's still the placeholder)
-    // if (formData.imageUri.includes('placeholder.com')) {
-    //   newErrors.image = 'Please capture an image before submitting';
-    //   isValid = false;
-    // }
 
     setErrors(newErrors);
     return isValid;
@@ -112,63 +145,89 @@ export default function RequestForm() {
       return;
     }
 
+    setUploading(true);
+
     try {
+      let finalImageUrl = null;
+
+      // Upload image if it's a local file:// URI
+      if (formData.imageUri && formData.imageUri.startsWith('file://')) {
+        try {
+          finalImageUrl = await uploadImageToSupabase(formData.imageUri);
+          console.log('Image uploaded successfully:', finalImageUrl);
+        } catch (uploadError) {
+          console.error('Image upload failed, continuing without image:', uploadError);
+          // Continue without image if upload fails
+          finalImageUrl = null;
+        }
+      } else if (formData.imageUri) {
+        // If it's already a web URL, use it as-is
+        finalImageUrl = formData.imageUri;
+      }
+
       // Prepare data for backend
-      const submissionData = {
+      const submissionData: any = {
         title: formData.title,
         type: formData.type,
         description: formData.description,
-        image_url: formData.imageUri,
         created_at: new Date().toISOString(),
       };
 
+      // Only add image_url if we have one
+      if (finalImageUrl) {
+        submissionData.image_url = finalImageUrl;
+      }
+
       console.log('Submitting data:', submissionData);
 
-      // TODO: Replace with your actual backend API URL
       const { data, error } = await supabase
-      .from('requests') // Your table name
-      .insert([submissionData])
-      .select(); // This returns the inserted data
+        .from('requests')
+        .insert([submissionData])
+        .select();
 
       if (error) {
         console.error('Supabase error:', error);
         throw error;
       }
 
+      Alert.alert(
+        'Success!',
+        'Your request has been submitted successfully.',
+        [
+          { 
+            text: 'OK', 
+            onPress: () => {
+              // Reset form after user clicks OK
+              setFormData({ 
+                title: '', 
+                description: '', 
+                type: null,
+                imageUri: null,
+              });
+              setValue(null);
+              router.back();
+            }
+          }
+        ]
+      );
+
       console.log('Inserted data:', data);
 
-     Alert.alert(
-      'Success!',
-      'Your request has been submitted successfully.',
-      [
-        { 
-          text: 'OK', 
-          onPress: () => {
-            // Reset form after user clicks OK
-            setFormData({ 
-              title: '', 
-              description: '', 
-              type: null,
-              imageUri: 'https://via.placeholder.com/300x200/4A90E2/FFFFFF?text=Camera+Image+Here'
-            });
-            setValue(null);
-            navigation.goBack();
-          }
-        }
-      ]
-    );
+    } catch (error) {
+      console.error('Submission error:', error);
+      Alert.alert(
+        'Error',
+        'Failed to submit request. Please try again.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setUploading(false);
+    }
+  };
 
-    console.log('Inserted data:', data);
-
-  } catch (error) {
-    console.error('Supabase submission error:', error);
-    Alert.alert(
-      'Error',
-      'Failed to submit request. Please try again.',
-      [{ text: 'OK' }]
-    );
-  }
-};
+  const handleBack = () => {
+    router.back();
+  };
 
   return (
     <KeyboardAvoidingView 
@@ -186,26 +245,31 @@ export default function RequestForm() {
           <Text className="text-2xl font-bold mb-5">Submit Request</Text>
           
           <View className="mb-5">
-            <Text className="text-lg font-semibold mb-2">Captured Image *</Text>
-            <View className={`border-2 border-dashed rounded-lg bg-gray-50 ${
-              errors.image ? 'border-red-500' : 'border-gray-300'
-            }`}>
-              <Image 
-                source={{ uri: formData.imageUri }} 
-                className="w-full h-64"
-                resizeMode="cover"
-              />
-            </View>
-            {errors.image ? (
-              <Text className="text-red-500 text-sm mt-1">{errors.image}</Text>
+            <Text className="text-lg font-semibold mb-2">Captured Image (Optional)</Text>
+            {formData.imageUri ? (
+              <View className="border-2 border-dashed border-gray-300 rounded-lg bg-black overflow-hidden">
+                <Image 
+                  source={{ uri: formData.imageUri }} 
+                  className="w-full h-64"
+                  resizeMode="contain"
+                />
+              </View>
             ) : (
-              <Text className="text-gray-500 text-sm mt-2 text-center">
-                {formData.imageUri.includes('placeholder.com') 
-                  ? 'Image from camera will appear here' 
-                  : 'Image ready for submission'
-                }
-              </Text>
+              <View className="border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 h-64 justify-center items-center">
+                <Text className="text-gray-500 text-center">No image captured</Text>
+                <Text className="text-gray-400 text-sm text-center mt-2">
+                  You can submit without an image
+                </Text>
+              </View>
             )}
+            <Text className="text-gray-500 text-sm mt-2 text-center">
+              {formData.imageUri ? 
+                (formData.imageUri.startsWith('file://') ? 
+                  'Image will be uploaded when you submit' : 
+                  'Image ready for submission') : 
+                'Optional - no image will be submitted'
+              }
+            </Text>
           </View>
 
           <View className="mb-4">
@@ -244,7 +308,6 @@ export default function RequestForm() {
                 setFormData({...formData, type: selectedValue});
                 clearError('type');
               }}
-              // Improved keyboard handling with scrollbar
               autoScroll={true}
               scrollViewProps={{
                 keyboardShouldPersistTaps: 'handled',
@@ -300,15 +363,21 @@ export default function RequestForm() {
           </View>
 
           <TouchableOpacity 
-            className="bg-[#FF3103] py-4 rounded-lg mt-4"
+            className={`py-4 rounded-lg mt-4 ${
+              uploading ? 'bg-gray-400' : 'bg-[#FF3103]'
+            }`}
             onPress={handleSubmit}
+            disabled={uploading}
           >
-            <Text className="text-white text-center font-bold text-lg">Submit Request</Text>
+            <Text className="text-white text-center font-bold text-lg">
+              {uploading ? 'Uploading...' : 'Submit Request'}
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
             className="bg-gray-500 py-4 rounded-lg mt-3"
-            onPress={() => navigation.goBack()}
+            onPress={handleBack}
+            disabled={uploading}
           >
             <Text className="text-white text-center font-bold text-lg">Back to Camera</Text>
           </TouchableOpacity>
